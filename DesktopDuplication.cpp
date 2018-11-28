@@ -12,6 +12,8 @@
 #include "OutputManager.h"
 #include "ThreadManager.h"
 
+#include "TextureToFile.h"
+
 //
 // Globals
 //
@@ -149,6 +151,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+	// used to start wic
+	HRESULT Hr = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	if (FAILED(Hr)) return 0;
+
     INT SingleOutput;
 
     // Synchronization
@@ -190,6 +196,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         return 0;
     }
 
+	// create and start ansyc save texture thread
+	StartAnsycSaveTextureThread();
+
     // Load simple cursor
     HCURSOR Cursor = nullptr;
     Cursor = LoadCursor(nullptr, IDC_ARROW);
@@ -222,9 +231,16 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // Create window
     RECT WindowRect = {0, 0, 800, 600};
     AdjustWindowRect(&WindowRect, WS_OVERLAPPEDWINDOW, FALSE);
+	// get actual size of desktop
+	RECT actualDesktop;
+	GetWindowRect(GetDesktopWindow(), &actualDesktop);
+	int left;
+	int top;
+	left = ((actualDesktop.right - actualDesktop.left) * 0.75) - (WindowRect.right - WindowRect.left) * 0.5;
+	top = (actualDesktop.bottom - actualDesktop.top) * 0.5 - (WindowRect.bottom - WindowRect.top) * 0.5;
     WindowHandle = CreateWindowW(L"ddasample", L"DXGI desktop duplication sample",
                            WS_OVERLAPPEDWINDOW,
-                           0, 0,
+                           left, top,
                            WindowRect.right - WindowRect.left, WindowRect.bottom - WindowRect.top,
                            nullptr, nullptr, hInstance, nullptr);
     if (!WindowHandle)
@@ -344,6 +360,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         ThreadMgr.WaitForThreadTermination();
     }
 
+	// close ansyc save texture thread
+	StopAnsycSaveTextureThread();
+
     // Clean up
     CloseHandle(UnexpectedErrorEvent);
     CloseHandle(ExpectedErrorEvent);
@@ -354,6 +373,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         // For a WM_QUIT message we should return the wParam value
         return static_cast<INT>(msg.wParam);
     }
+
+	::CoUninitialize();
 
     return 0;
 }

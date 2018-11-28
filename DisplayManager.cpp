@@ -6,6 +6,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved
 
 #include "DisplayManager.h"
+
+#include "TextureToFile.h"
+
+#include <sstream>
+
 using namespace DirectX;
 
 //
@@ -323,6 +328,38 @@ DUPL_RETURN DISPLAYMANAGER::CopyDirty(_In_ ID3D11Texture2D* SrcSurface, _Inout_ 
 
     D3D11_TEXTURE2D_DESC ThisDesc;
     SrcSurface->GetDesc(&ThisDesc);
+
+	// save src surface to bmp file
+	{
+		ID3D11Texture2D* CpuReadTexture = nullptr;
+		D3D11CopyTexture(&CpuReadTexture, SrcSurface, m_Device, m_DeviceContext);
+		if (CpuReadTexture) {
+
+			std::wstring filepath;
+			{
+				// 
+				static std::wstring CurPath = ExePath();
+				std::wstringstream wss;
+				static DWORD BmpNumber = 0;
+				BmpNumber++;
+				wss << CurPath;
+				wss << "\\ScreenShot";
+				if (!DirectoryExists(wss.str().c_str())) {
+					CreateDirectory(wss.str().c_str(), NULL);
+				}
+				wss << "\\DesktopDuplication-" << BmpNumber << L".bmp";
+				filepath = wss.str();
+			}
+#if 0
+			// sync save may lost render frames
+			SaveTextureToBmp(filepath.c_str(), CpuReadTexture);
+#else
+			AsyncSaveTextureToBmp(filepath.c_str(), CpuReadTexture);
+#endif
+
+			CpuReadTexture->Release();
+		}
+	}
 
     if (!m_RTV)
     {
