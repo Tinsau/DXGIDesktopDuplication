@@ -354,12 +354,16 @@ DUPL_RETURN DISPLAYMANAGER::CopyDirty(_In_ ID3D11Texture2D* SrcSurface, _Inout_ 
 			// sync save may lost render frames
 			SaveTextureToBmp(filepath.c_str(), CpuReadTexture);
 #else
+			// async save also may lost render frames
 			AsyncSaveTextureToBmp(filepath.c_str(), CpuReadTexture);
 #endif
 
 			CpuReadTexture->Release();
 		}
 	}
+
+	// don't paint
+	return DUPL_RETURN_SUCCESS;
 
     if (!m_RTV)
     {

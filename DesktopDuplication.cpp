@@ -229,7 +229,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     }
 
     // Create window
-    RECT WindowRect = {0, 0, 800, 600};
+	int expectedWidth = 800;
+	int expectedHeight = 600;
+	expectedWidth = 200;
+	expectedHeight = 120;
+    RECT WindowRect = {0, 0, expectedWidth, expectedHeight };
     AdjustWindowRect(&WindowRect, WS_OVERLAPPEDWINDOW, FALSE);
 	// get actual size of desktop
 	RECT actualDesktop;
